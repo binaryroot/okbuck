@@ -31,7 +31,7 @@ def build = [
         nullaway         : "com.uber.nullaway:nullaway:0.5.3",
         rockerPlugin     : "gradle.plugin.com.fizzed:rocker-gradle-plugin:${versions.rocker}",
         rockerRuntime    : "com.fizzed:rocker-runtime:${versions.rocker}",
-        shadowJar        : "com.github.jengelman.gradle.plugins:shadow:2.0.1",
+        shadowJar        : "com.github.jengelman.gradle.plugins:shadow:5.0.0",
         sqlDelightPlugin : "com.squareup.sqldelight:gradle-plugin:1.0.0",
         jna              : "net.java.dev.jna:jna:5.2.0",
         jnaPlatform      : "net.java.dev.jna:jna-platform:5.2.0",
