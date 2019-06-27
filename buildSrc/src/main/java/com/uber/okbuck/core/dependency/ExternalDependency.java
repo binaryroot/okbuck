@@ -60,6 +60,10 @@ public class ExternalDependency {
     return base.getMavenCoordsForValidation();
   }
 
+  public String getFullNameWithoutPackaging() {
+    return getMavenCoordsForValidation() + base.versionless().classifier().map(c -> VersionlessDependency.COORD_DELIMITER + c).orElse("");
+  }
+
   @Override
   public int hashCode() {
     return this.base.hashCode();
