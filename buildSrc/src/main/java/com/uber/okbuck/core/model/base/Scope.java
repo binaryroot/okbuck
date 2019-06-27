@@ -44,6 +44,8 @@ import org.gradle.api.artifacts.result.ResolvedArtifactResult;
 import org.gradle.api.attributes.Attribute;
 import org.gradle.api.specs.Spec;
 
+import static com.uber.okbuck.core.dependency.BaseExternalDependency.JAR;
+
 public class Scope {
 
   private final Set<String> javaResources;
@@ -140,6 +142,7 @@ public class Scope {
   }
 
   public Set<ExternalDependency> getExternalDeps(boolean firstLevel) {
+    Set<ExternalDependency> rawDependencySet;
     if (configuration != null && firstLevel) {
       Set<VersionlessDependency> firstLevelDependencies =
           configuration
@@ -150,7 +153,7 @@ public class Scope {
               .flatMap(Collection::stream)
               .collect(Collectors.toSet());
 
-      return external
+      rawDependencySet = external
           .stream()
           .map(depCache::get)
           .filter(
@@ -165,8 +168,24 @@ public class Scope {
               })
           .collect(Collectors.toSet());
     } else {
-      return external.stream().map(depCache::get).collect(Collectors.toSet());
+      rawDependencySet = external.stream().map(depCache::get).collect(Collectors.toSet());
     }
+    Set<ExternalDependency> toRemove = new HashSet<>();
+    Map<String, List<ExternalDependency>> duplicatesByGroup = rawDependencySet.stream().collect(Collectors.groupingBy(ExternalDependency::getFullNameWithoutPackaging));
+    duplicatesByGroup.forEach(
+            (unused, listOfDupeDeps) -> {
+              if (listOfDupeDeps.size() == 2) {
+                Optional<ExternalDependency> removable = listOfDupeDeps.stream().filter(it -> it.getPackaging().equals(JAR)).findFirst();
+                if (!removable.isPresent()) {
+                  throw new IllegalArgumentException("Two or more duplicate artifacts found");
+                } else {
+                  toRemove.add(removable.get());
+                }
+              }
+            }
+    );
+    rawDependencySet.removeAll(toRemove);
+    return rawDependencySet;
   }
 
   public final Set<ExternalDependency> getExternalDeps() {
