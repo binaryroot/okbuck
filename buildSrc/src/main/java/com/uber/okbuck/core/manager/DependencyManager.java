@@ -36,6 +36,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 import org.apache.commons.io.FileUtils;
@@ -349,6 +350,20 @@ public class DependencyManager {
               ImmutableList.builder();
           ImmutableList.Builder<ExternalDependency> prebuiltDependencies = ImmutableList.builder();
           ImmutableList.Builder<ExternalDependency> httpFileDependencies = ImmutableList.builder();
+
+          Map<String, List<ExternalDependency>> duplicatesByGroup = dependencies.stream().collect(Collectors.groupingBy(ExternalDependency::getFullNameWithoutPackaging));
+          duplicatesByGroup.forEach(
+                  (unused, listOfDupeDeps) -> {
+                      if (listOfDupeDeps.size() == 2) {
+                          Optional<ExternalDependency> removable = listOfDupeDeps.stream().filter(it -> it.getPackaging().equals(JAR)).findFirst();
+                          if (!removable.isPresent()) {
+                              throw new IllegalArgumentException("Two or more duplicate artifacts found");
+                          } else {
+                              dependencies.remove(removable.get());
+                          }
+                      }
+                  }
+          );
 
           if (externalDependenciesExtension.shouldDownloadInBuck()) {
             dependencies.forEach(
